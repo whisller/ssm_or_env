@@ -137,10 +137,10 @@ def test_it_works_as_decorator_for_lambda_function():
     # data from AWS is fetch only once
     handler({}, MockContext())
     info = inspect.getclosurevars(_ssmenv)
-    first_call_id = id(info.nonlocals["lambda_ssmenv"])
+    first_call = info.nonlocals["lambda_ssmenv"]
 
     handler({}, MockContext())
     info = inspect.getclosurevars(_ssmenv)
-    second_call_id = id(info.nonlocals["lambda_ssmenv"])
+    second_call = info.nonlocals["lambda_ssmenv"]
 
-    assert first_call_id == second_call_id
+    assert first_call is second_call
