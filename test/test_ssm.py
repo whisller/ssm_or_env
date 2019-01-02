@@ -1,3 +1,4 @@
+import inspect
 import os
 
 import boto3
@@ -125,9 +126,21 @@ def test_it_works_as_decorator_for_lambda_function():
         Name="/service/my-service/first", Value="first-value", Type="String"
     )
 
-    @ssmenv("/service/my-service")
+    _ssmenv = ssmenv("/service/my-service")
+
+    @_ssmenv
     def handler(event, context):
         assert "SERVICE_MY_SERVICE_FIRST" in context.params
         assert context.params["SERVICE_MY_SERVICE_FIRST"] == "first-value"
 
+    # Make sure that SSMEnv is initialised only once, which means that until lambda function is warm
+    # data from AWS is fetch only once
     handler({}, MockContext())
+    info = inspect.getclosurevars(_ssmenv)
+    first_call_id = id(info.nonlocals["lambda_ssmenv"])
+
+    handler({}, MockContext())
+    info = inspect.getclosurevars(_ssmenv)
+    second_call_id = id(info.nonlocals["lambda_ssmenv"])
+
+    assert first_call_id == second_call_id
