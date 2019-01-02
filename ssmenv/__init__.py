@@ -66,22 +66,19 @@ class SSMEnv(UserDict):
         return re.sub(r"\W", "_", name).upper().strip("_")
 
 
-_lambda_ssmenv = None
-
-
 def ssmenv(*args, **kwargs):
+    lambda_ssmenv = None
+
     def wrapper_wrapper(handler):
         @functools.wraps(handler)
         def wrapper(event, context):
             if not hasattr(context, "params"):
                 context.params = {}
 
-            global _lambda_ssmenv
-            if not _lambda_ssmenv:
-                _lambda_ssmenv = SSMEnv(*args, **kwargs)
-            context.params = (
-                _lambda_ssmenv if _lambda_ssmenv else SSMEnv(*args, **kwargs)
-            )
+            nonlocal lambda_ssmenv
+            if not lambda_ssmenv:
+                lambda_ssmenv = SSMEnv(*args, **kwargs)
+            context.params = lambda_ssmenv
 
             return handler(event, context)
 
